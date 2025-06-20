@@ -5,6 +5,7 @@ import * as userModel from "../models/user";
 import { User } from "../types/User";
 import { check, validationResult } from "express-validator";
 import { generateToken, verifyToken } from "../jwt";
+import { Post } from "../types/Post";
 
 const userRouter: Router = express.Router();
 var jsonParser = bodyParser.json();
@@ -77,17 +78,23 @@ userRouter.post(
   }
 );
 
-// Edit user
-userRouter.put("/:id", jsonParser, async (req: Request, res: Response) => {
-  if (!verifyToken(req, res)) {
-    res.status(403).json({
-      message: "<b>Trebue sa fi logat pentru a accesa aceasta zona!<b>",
-    });
-    return;
+
+
+/// Edit user
+postRouter.put("/:id", jsonParser, async (req: Request, res: Response) => {
+  let fileToUpload: any;
+  let uploadPath;
+  const user: Post = req.body;
+  if (req.files && req.files.poza) {
+    fileToUpload = req.files!.poza as UploadedFile; //Object is possibly 'null' or 'undefined'.
+    const newFileName = `${Date.now()}_${fileToUpload.name}`;
+    uploadPath = path.join(__dirname, "..", "/uploads/", newFileName);
+
+    fileToUpload.mv(uploadPath);
+
+    user["poza"] = newFileName;
   }
-  const user: User = req.body;
-  console.log(req.body);
-  userModel.update(user, (err: Error) => {
+  postModel.update(post, (err: Error) => {
     if (err) {
       return res.status(500).json({ message: err.message });
     }
